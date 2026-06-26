@@ -24,7 +24,7 @@ def health():
 
 def run_flask():
     port = int(os.environ.get("PORT", 10000))
-    app_flask.run(host="0.0.0.0", port=port)
+    app_flask.run(host="0.0.0.0", port=port, threaded=False)
 
 # ===== Получение токена GigaChat =====
 async def get_giga_token():
