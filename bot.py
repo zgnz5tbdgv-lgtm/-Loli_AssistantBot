@@ -2,6 +2,7 @@ import os
 import json
 import httpx
 import threading
+import base64
 from flask import Flask
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
@@ -27,6 +28,10 @@ def run_flask():
 
 # ===== Получение токена GigaChat =====
 async def get_giga_token():
+    auth_string = f"{CLIENT_ID}:{CLIENT_SECRET}"
+    auth_bytes = auth_string.encode("utf-8")
+    auth_base64 = base64.b64encode(auth_bytes).decode("utf-8")
+    
     async with httpx.AsyncClient(verify=False) as client:
         response = await client.post(
             "https://ngw.devices.sberbank.ru:9443/api/v2/oauth",
@@ -34,15 +39,23 @@ async def get_giga_token():
                 "scope": SCOPE,
                 "grant_type": "client_credentials"
             },
-            auth=(CLIENT_ID, CLIENT_SECRET),
-            headers={"RqUID": "12345678-1234-1234-1234-1234567890ab"}
+            headers={
+                "Authorization": f"Basic {auth_base64}",
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Accept": "application/json",
+                "RqUID": "12345678-1234-1234-1234-1234567890ab"
+            }
         )
         data = response.json()
-        print("🔍 Токен ответ:", data)  # <- добавили отладку
+        print("🔍 Ответ GigaChat (token):", data)
         return data.get("access_token")
+
 # ===== Запрос к GigaChat =====
 async def ask_giga(prompt: str):
     token = await get_giga_token()
+    if not token:
+        return "❌ Не удалось получить токен GigaChat. Проверь ключи."
+    
     async with httpx.AsyncClient(verify=False) as client:
         response = await client.post(
             "https://gigachat.devices.sberbank.ru/api/v1/chat/completions",
@@ -62,12 +75,10 @@ async def ask_giga(prompt: str):
             }
         )
         data = response.json()
+        print("🔍 Ответ GigaChat (chat):", data)
         
-        # Если есть ошибка — покажем её полностью
         if "error" in data:
             return f"❌ Ошибка GigaChat: {data['error']}"
-        
-        # Если нет choices — покажем весь ответ
         if "choices" not in data:
             return f"⚠️ Странный ответ от GigaChat:\n{data}"
         
@@ -91,10 +102,8 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ===== Запуск =====
 if __name__ == "__main__":
-    # Запускаем Flask в отдельном потоке (для Render)
     threading.Thread(target=run_flask).start()
     
-    # Запускаем бота
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
