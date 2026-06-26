@@ -27,7 +27,7 @@ def run_flask():
 
 # ===== Получение токена GigaChat =====
 async def get_giga_token():
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(verify=False) as client:
         response = await client.post(
             "https://ngw.devices.sberbank.ru:9443/api/v2/oauth",
             data={
@@ -42,7 +42,7 @@ async def get_giga_token():
 # ===== Запрос к GigaChat =====
 async def ask_giga(prompt: str):
     token = await get_giga_token()
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(verify=False) as client:
         response = await client.post(
             "https://gigachat.devices.sberbank.ru/api/v1/chat/completions",
             headers={
