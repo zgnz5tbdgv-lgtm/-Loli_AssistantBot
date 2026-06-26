@@ -1,30 +1,15 @@
+mport os
+import json
+import httpx
+import threading
 import base64
-import requests
-import asyncio
+from flask import Flask
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 
-def get_giga_token_sync():
-    auth_string = f"{CLIENT_ID}:{CLIENT_SECRET}"
-    auth_bytes = auth_string.encode("utf-8")
-    auth_base64 = base64.b64encode(auth_bytes).decode("utf-8")
-
-    url = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
-    payload = {'scope': 'GIGACHAT_API_PERS'}
-    headers = {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json',
-        'RqUID': '12345678-1234-1234-1234-1234567890ab',
-        'Authorization': f'Basic {auth_base64}'
-    }
-
-    response = requests.post(url, headers=headers, data=payload, verify=False)
-    print("🔍 Ответ GigaChat (token):", response.text)
-    return response.json().get("access_token")
-
-async def get_giga_token():
-    return await asyncio.to_thread(get_giga_token_sync)
 # ===== GigaChat данные =====
 CLIENT_ID = "019f0552-a332-7a2e-802b-62e96b6c8c02"
-CLIENT_SECRET = "MDE5ZjA1NTItYTMzMi03YTJlLTgwMmItNjJlOTZiNmM4YzAyOjc0MzJmNTcyLTdmMDAtNDljYi1hMzhiLTY4MzZiZDE0MzhjOA=="
+CLIENT_SECRET = "MDE5ZjA1NTItYTMzMi03YTJlLTgwMmItNjJlOTZiNmM4YzAyOmZhNmYzN2JmLWFjMDItNDQ4Ni04ODg1LWY5YmEzNDE1MjE0ZA=="
 SCOPE = "GIGACHAT_API_PERS"
 
 # ===== Telegram токен =====
@@ -46,12 +31,12 @@ async def get_giga_token():
     auth_string = f"{CLIENT_ID}:{CLIENT_SECRET}"
     auth_bytes = auth_string.encode("utf-8")
     auth_base64 = base64.b64encode(auth_bytes).decode("utf-8")
-    
+
     async with httpx.AsyncClient(verify=False) as client:
         response = await client.post(
             "https://ngw.devices.sberbank.ru:9443/api/v2/oauth",
             data={
-                "scope": SCOPE,
+                "scope": "GIGACHAT_API_PERS",
                 "grant_type": "client_credentials"
             },
             headers={
@@ -70,7 +55,7 @@ async def ask_giga(prompt: str):
     token = await get_giga_token()
     if not token:
         return "❌ Не удалось получить токен GigaChat. Проверь ключи."
-    
+
     async with httpx.AsyncClient(verify=False) as client:
         response = await client.post(
             "https://gigachat.devices.sberbank.ru/api/v1/chat/completions",
@@ -91,12 +76,12 @@ async def ask_giga(prompt: str):
         )
         data = response.json()
         print("🔍 Ответ GigaChat (chat):", data)
-        
+
         if "error" in data:
             return f"❌ Ошибка GigaChat: {data['error']}"
         if "choices" not in data:
             return f"⚠️ Странный ответ от GigaChat:\n{data}"
-        
+
         return data["choices"][0]["message"]["content"]
 
 # ===== Команда /start =====
@@ -116,12 +101,12 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(answer)
 
 # ===== Запуск =====
-if __name__ == "__main__":
+if name == "__main__":
     threading.Thread(target=run_flask).start()
-    
+
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
-    
+
     print("✅ Бот с GigaChat и Лоли запущен!")
-    app.run_polling()
+    app.run_polling()	
