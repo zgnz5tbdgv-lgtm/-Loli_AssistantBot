@@ -52,16 +52,24 @@ async def ask_giga(prompt: str):
                 "RqUID": "12345678-1234-1234-1234-1234567890ab"
             },
             json={
-                "model": "GigaChat",  # ← попробуй заменить на "GigaChat:lite" или "GigaChat:pro"
+                "model": "GigaChat:lite",
                 "messages": [
-                    {"role": "system", "content": "Ты — Лоли, собака. Отвечай коротко, весело, с эмодзи 🐾."},
+                    {"role": "system", "content": "Ты — Лоли, собака. Отвечай коротко, весело, с эмодзи 🐾. Всегда добавляй совет про ветеринара, если вопрос про здоровье."},
                     {"role": "user", "content": prompt}
                 ],
                 "temperature": 0.7
             }
         )
         data = response.json()
-        print("🔍 Ответ GigaChat:", data)  # ← добавили вывод для отладки
+        
+        # Если есть ошибка — покажем её полностью
+        if "error" in data:
+            return f"❌ Ошибка GigaChat: {data['error']}"
+        
+        # Если нет choices — покажем весь ответ
+        if "choices" not in data:
+            return f"⚠️ Странный ответ от GigaChat:\n{data}"
+        
         return data["choices"][0]["message"]["content"]
 
 # ===== Команда /start =====
