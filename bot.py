@@ -101,7 +101,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(answer)
 
 # ===== Запуск =====
-if name == "__main__":
+if __name__ == "__main__":
     threading.Thread(target=run_flask).start()
 
     app = ApplicationBuilder().token(BOT_TOKEN).build()
