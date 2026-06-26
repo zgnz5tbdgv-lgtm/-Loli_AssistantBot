@@ -37,8 +37,9 @@ async def get_giga_token():
             auth=(CLIENT_ID, CLIENT_SECRET),
             headers={"RqUID": "12345678-1234-1234-1234-1234567890ab"}
         )
-        return response.json().get("access_token")
-
+        data = response.json()
+        print("🔍 Токен ответ:", data)  # <- добавили отладку
+        return data.get("access_token")
 # ===== Запрос к GigaChat =====
 async def ask_giga(prompt: str):
     token = await get_giga_token()
