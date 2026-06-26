@@ -1,4 +1,16 @@
-python-telegram-bot
-httpx
-Flask
+# Библиотека для работы с Telegram Bot API
+python-telegram-bot==22.8
 
+# Асинхронный HTTP-клиент (для запросов к GigaChat)
+httpx==0.28.1
+
+# Веб-фреймворк для создания вебхука
+Flask==3.1.3
+
+# Зависимости python-telegram-bot и httpx
+# (их можно не указывать, pip установит автоматически, но для верности)
+anyio==4.14.1
+httpcore==1.0.9
+h11==0.16.0
+idna==3.18
+certifi==2026.6.17
