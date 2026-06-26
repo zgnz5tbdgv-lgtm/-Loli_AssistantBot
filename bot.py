@@ -116,14 +116,9 @@ if __name__ == "__main__":
         Принимает обновления от Telegram и передает их боту на обработку.
         """
         if request.method == "POST":
-            # Получаем JSON из тела запроса
-            update_data = request.get_json(force=True)
-            # Создаем объект Update
-            update = Update.de_json(update_data, application.bot)
-            # Передаем обновление в диспетчер бота для обработки
+            update = Update.de_json(request.get_json(force=True), application.bot)
             application.process_update(update)
         return 'ok'
     
     # Запускаем только Flask-приложение.
-    # Процесс бота теперь встроен в него и будет работать внутри него.
-    run_flask()
+    run_flask() # Эта функция у вас уже была определена
