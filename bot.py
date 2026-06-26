@@ -1,12 +1,27 @@
-import os
-import json
-import httpx
-import threading
 import base64
-from flask import Flask
-from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
+import requests
+import asyncio
 
+def get_giga_token_sync():
+    auth_string = f"{CLIENT_ID}:{CLIENT_SECRET}"
+    auth_bytes = auth_string.encode("utf-8")
+    auth_base64 = base64.b64encode(auth_bytes).decode("utf-8")
+
+    url = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
+    payload = {'scope': 'GIGACHAT_API_PERS'}
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json',
+        'RqUID': '12345678-1234-1234-1234-1234567890ab',
+        'Authorization': f'Basic {auth_base64}'
+    }
+
+    response = requests.post(url, headers=headers, data=payload, verify=False)
+    print("🔍 Ответ GigaChat (token):", response.text)
+    return response.json().get("access_token")
+
+async def get_giga_token():
+    return await asyncio.to_thread(get_giga_token_sync)
 # ===== GigaChat данные =====
 CLIENT_ID = "019f0552-a332-7a2e-802b-62e96b6c8c02"
 CLIENT_SECRET = "MDE5ZjA1NTItYTMzMi03YTJlLTgwMmItNjJlOTZiNmM4YzAyOjc0MzJmNTcyLTdmMDAtNDljYi1hMzhiLTY4MzZiZDE0MzhjOA=="
