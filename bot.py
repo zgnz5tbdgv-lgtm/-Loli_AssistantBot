@@ -100,13 +100,30 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         answer = f"🐾 Ой, лапки устали... Ошибка: {e}"
     await update.message.reply_text(answer)
 
-# ===== Запуск =====
+# ===== Запуск (НОВЫЙ КОД) =====
 if __name__ == "__main__":
-    threading.Thread(target=run_flask).start()
+    # Создаем Application (бота) один раз
+    application = ApplicationBuilder().token(BOT_TOKEN).build()
+    
+    # Добавляем хендлеры в приложение
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
-
-    print("✅ Бот с GigaChat и Лоли запущен!")
-    app.run_polling()	
+    # --- ДОБАВЬТЕ ЭТОТ МАРШРУТ ДЛЯ ВЕБХУКА ---
+    @app_flask.route('/webhook', methods=['POST'])
+    def webhook():
+        """
+        Принимает обновления от Telegram и передает их боту на обработку.
+        """
+        if request.method == "POST":
+            # Получаем JSON из тела запроса
+            update_data = request.get_json(force=True)
+            # Создаем объект Update
+            update = Update.de_json(update_data, application.bot)
+            # Передаем обновление в диспетчер бота для обработки
+            application.process_update(update)
+        return 'ok'
+    
+    # Запускаем только Flask-приложение.
+    # Процесс бота теперь встроен в него и будет работать внутри него.
+    run_flask()
